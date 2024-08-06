@@ -2,12 +2,17 @@ from enum import StrEnum
 from uuid import UUID
 
 from fastapi import APIRouter, status
+from pydantic import EmailStr
 from sqlalchemy import select
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.orm import joinedload
 
 from blogs.dependencies import CurrentUser, Session
-from blogs.exceptions import IncorrectDataError, UserNotFoundError
+from blogs.exceptions import (
+    AuthorInvalidError,
+    IncorrectDataError,
+    UserNotFoundError,
+)
 from blogs.models import Post, Sub, User
 from blogs.schemas import PostIn, PostOut, UserIn, UserOut
 
@@ -55,6 +60,7 @@ def get_users(
             UserOut.model_validate(user, from_attributes=True)
             for user in users
         ]
+    """Возможно стоит добавить ошибку если база пуста"""
     if (subscribed_to_user and followed) is not None:
         raise IncorrectDataError()
 
@@ -157,8 +163,7 @@ def get_posts(
         .all()
     )
     return [
-        PostOut.model_validate(post, from_attributes=True)
-        for post in posts
+        PostOut.model_validate(post, from_attributes=True) for post in posts
     ]
 
 
@@ -172,13 +177,7 @@ def get_posts(
 # #         .options(joinedload(User.posts)),
 # #     ).scalars().all()
 # #
-# # )
-# #
-# #
-# @user_router.get('/{user_id}')
-# def get_blog(user_id: int) -> UserOut:
-#     pass
-# #
+#
 # #
 # # # *******************************************************************
 # #
@@ -197,13 +196,29 @@ def get_posts(
 #     pass
 # #
 # #
-# @user_router.patch('/{user_id}/')
-# def update_blog(
-#     user_id: int,
-#     author: str | None = None,
-#     email: EmailStr | None = None,
-# ) -> None:
-#     pass
+@user_router.patch('/{user_id}/')
+def update_blog(
+    session: Session,
+    author: CurrentUser,
+    author_name: str | None = None,
+    author_email: EmailStr | None = None,
+) -> None:
+    if author_name is None and author_email is None:
+        raise AuthorInvalidError
+
+    user = session.execute(
+        select(User).where(User.id == author.id),
+    ).scalar_one()
+
+    if author_name is not None:
+        user.name = author_name
+    if author_email is not None:
+        user.email = author_email
+
+    session.add(user)
+    session.commit()
+
+
 # # own = (
 # #     session.execute(
 # #         select(User.name)
