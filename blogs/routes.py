@@ -7,15 +7,19 @@ from sqlalchemy.exc import NoResultFound
 from sqlalchemy.orm import joinedload
 
 from blogs.dependencies import CurrentUser, Session
-from blogs.exceptions import IncorrectDataError, UserNotFoundError
+from blogs.exceptions import IncorrectDataError, UserNotFoundError, NotEnteredDataError
 from blogs.models import Post, Sub, User
 from blogs.schemas import PostIn, PostOut, UserIn, UserOut
+
 
 BLOG_PATH = '/user'
 POST_PATH = '/post'
 
 user_router = APIRouter(prefix=BLOG_PATH, tags=['user routes'])
 post_router = APIRouter(prefix=POST_PATH, tags=['post routes'])
+
+
+# # - [FastAPI Basic Auth](https://fastapi.tiangolo.com/advanced/security/http-basic-auth/)
 
 
 @user_router.post('', status_code=status.HTTP_201_CREATED)
@@ -181,58 +185,41 @@ def get_posts(
     ]
 
 
-# #
-# # ## Links
-# # - [FastAPI Basic Auth](https://fastapi.tiangolo.com/advanced/security/http-basic-auth/)
-# # user = (
-# #     session.execute(
-# #         select(User)
-# #         .where(User.id == user_id)
-# #         .options(joinedload(User.posts)),
-# #     ).scalars().all()
-# #
-# # )
-# #
-# #
-# @user_router.get('/{user_id}')
-# def get_blog(user_id: int) -> UserOut:
-#     pass
-# #
-# #
-# # # *******************************************************************
-# #
-# #
-# #
-# #
-# #
+
+@user_router.patch('/{user_id}/')
+def update_blog(
+    author: CurrentUser,
+    session: Session,
+    name: str | None = None,
+    email: str | None = None,
+    password: str | None = None,
+) -> None:
+    """
+    Изменить данные вашей учётной записи
+
+    (имя пользователя, электронную почту, пароль)
+    """
+
+    if not any((author, email, password)):
+        raise NotEnteredDataError
+
+    if author is not None:
+        author.name = name
+        session.add()
+        session.commit()
+
+
+# inspector
+# own = (
+#     session.execute(
+#         select(User.name)
+#         .where(User.id == user_id)
+#         .options(joinedload(User.posts)),
+#     )
+#     .unique()
+#     .scalar_one()
+# )
 #
-#
-# #
-# # # ******************************************************************
-# #
-#
-# @user_router.put('/{user_id}')
-# def put_blog(user_id: int, new_blog: UserIn) -> UserOut:
-#     pass
-# #
-# #
-# @user_router.patch('/{user_id}/')
-# def update_blog(
-#     user_id: int,
-#     author: str | None = None,
-#     email: EmailStr | None = None,
-# ) -> None:
-#     pass
-# # own = (
-# #     session.execute(
-# #         select(User.name)
-# #         .where(User.id == user_id)
-# #         .options(joinedload(User.posts)),
-# #     )
-# #     .unique()
-# #     .scalar_one()
-# # )
-# #
 # # # *****************************************************************
 
 

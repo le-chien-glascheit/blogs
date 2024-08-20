@@ -29,3 +29,8 @@ class AuthorInvalidError(BlogsError):
 class IncorrectDataError(BlogsError):
     status = status.HTTP_406_NOT_ACCEPTABLE
     description = 'Введёные вами данные некорректны'
+
+
+class NotEnteredDataError(BlogsError):
+    status = status.HTTP_406_NOT_ACCEPTABLE
+    description = 'Вы не ввели данные'
