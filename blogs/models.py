@@ -24,6 +24,9 @@ class Base(DeclarativeBase):
 
 
 class Post(Base):
+    """
+    Post(title, text)
+    """
     title: Mapped[str]
     text: Mapped[str]
     user_id: Mapped[UUID] = mapped_column(ForeignKey('user.id'))
@@ -104,8 +107,8 @@ if __name__ == '__main__':
 
     post4 = Post(
         title='Лиза',
-        text="""Интересно почему у Лизы нет ни постов,
-              ни связей с другими пользователями""",
+        text='Интересно почему у Лизы нет ни постов'
+              'ни связей с другими пользователями',
         user=user3,
     )
 

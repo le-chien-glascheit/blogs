@@ -20,6 +20,11 @@ post_router = APIRouter(prefix=POST_PATH, tags=['post routes'])
 
 @user_router.post('', status_code=status.HTTP_201_CREATED)
 def register_user(new_user: UserIn, session: Session) -> None:
+    """
+    Регистрация пользователей
+
+    Введите имя пользователя, свой адрес электронной почты и придумайте пароль.
+    """
     session.add(
         User(**new_user.model_dump()),
     )
@@ -48,6 +53,9 @@ def get_users(
 
     При выборе followed выводит список пользователей,
     на которых подписан указанный вами пользователь.
+
+    В случае если ничего не выбрать,
+    выводит всех пользователей текущей базы данных.
     """
     if (subscribed_to_user is None) and (followed is None):
         users = session.execute(select(User)).scalars().all()
@@ -98,6 +106,9 @@ def subscribe_to_user(
     subscribing_user: CurrentUser,
     session: Session,
 ) -> None:
+    """
+    Подписаться на выбранного пользователя по id.
+    """
     try:
         the_one_subscribe_to = session.execute(
             select(User).where(User.id == user_id),
@@ -125,6 +136,11 @@ def create_post(
     user: CurrentUser,
     session: Session,
 ) -> None:
+    """
+    Создать пост:
+
+    Введите заголовок и текст.
+    """
     new_post = Post(user=user, **post.model_dump())
     session.add(new_post)
     session.commit()
@@ -139,6 +155,9 @@ def get_posts(
     session: Session,
     user_id: UUID | None = None,
 ) -> list[PostOut]:
+    """
+    Вывести все посты выбранного (по id) пользователя.
+    """
     if user_id is None:
         posts = session.execute(
             select(Post, User.name).join(User),
@@ -222,6 +241,9 @@ def delite_user(
     user: CurrentUser,
     session: Session,
 ) -> None:
+    """
+    Удалить ваш аккаунт!!!
+    """
     session.delete(user)
     session.commit()
 
@@ -232,6 +254,9 @@ def delite_post(
     session: Session,
     post_id: UUID,
 ) -> None:
+    """
+    Удалить ваш выбранный пост по его id.
+    """
     post = session.execute(
         select(Post).where(Post.id == post_id).where(Post.user == user),
     ).scalar_one()
