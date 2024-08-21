@@ -1,10 +1,14 @@
-from dataclasses import field
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 
 class BaseUser(BaseModel):
+    """
+    name: str
+    email: EmailStr
+    """
+
     name: str = Field(
         default=...,
         title='Имя',
@@ -21,6 +25,12 @@ class BaseUser(BaseModel):
 
 
 class UserIn(BaseUser):
+    """
+    name: str
+    email: EmailStr
+    password: str
+    """
+
     password: str = Field(
         default=...,
         title='Пароль',
@@ -32,10 +42,21 @@ class UserIn(BaseUser):
 
 
 class UserOut(BaseUser):
+    """
+    id: UUID
+    name: str
+    email: EmailStr
+    """
+
     id: UUID
 
 
 class PostIn(BaseModel):
+    """
+    title: str
+    text: str
+    """
+
     title: str = Field(
         default=...,
         title='Заголовок',
@@ -53,6 +74,13 @@ class PostIn(BaseModel):
 
 
 class PostOut(PostIn):
+    """
+        id: UUID
+        author: str | None
+        title: str
+        text: str
+    """
+
     id: UUID
     author: str | None = Field(
         default=None,

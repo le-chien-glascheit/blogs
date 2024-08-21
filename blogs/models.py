@@ -15,6 +15,10 @@ from blogs.settings import DB_URL
 
 
 class Base(DeclarativeBase):
+    """
+    id: UUID
+    """
+
     id: Mapped[UUID] = mapped_column(Uuid, primary_key=True, default=uuid4)
 
     @declared_attr
@@ -25,7 +29,8 @@ class Base(DeclarativeBase):
 
 class Post(Base):
     """
-    Post(title, text)
+    title: str
+    text: str
     """
     title: Mapped[str]
     text: Mapped[str]
@@ -38,6 +43,12 @@ class Post(Base):
 
 
 class Sub(Base):
+    """
+    follower_id: UUID
+    followed_id: UUID
+    sub_date: datetime = mapped_column(default=datetime.now)
+    """
+
     follower_id: Mapped[UUID] = mapped_column(ForeignKey('user.id'))
     followed_id: Mapped[UUID] = mapped_column(ForeignKey('user.id'))
     sub_date: Mapped[datetime] = mapped_column(default=datetime.now)
@@ -56,6 +67,12 @@ class Sub(Base):
 
 
 class User(Base):
+    """
+    name: str
+    email: str
+    password: str
+    """
+
     name: Mapped[str]
     email: Mapped[str] = mapped_column(unique=True)
     password: Mapped[str]
