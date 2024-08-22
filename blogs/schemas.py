@@ -19,8 +19,7 @@ class BaseUser(BaseModel):
         default=...,
         title='Почта',
         description='Адрес электронной почты',
-        examples=['Nikita@example.com']
-
+        examples=['Nikita@example.com'],
     )
 
 
@@ -35,7 +34,7 @@ class UserIn(BaseUser):
         default=...,
         title='Пароль',
         description='Придумайте и введите свой пароль',
-        examples=['blabla']
+        examples=['blabla'],
     )
 
     model_config = ConfigDict(title='Пользователь')
@@ -67,18 +66,20 @@ class PostIn(BaseModel):
         default=...,
         title='Создать запись',
         description='Что у вас нового?',
-        examples=['Жара и грозы ожидаются в Беларуси во вторник.'
-                  ' При жаркой погоде учащаются случаи гибели людей на воде'
-                  ' при купании и увеличивается вероятность тепловых ударов.'],
+        examples=[
+            'Жара и грозы ожидаются в Беларуси во вторник.'
+            ' При жаркой погоде учащаются случаи гибели людей на воде'
+            ' при купании и увеличивается вероятность тепловых ударов.',
+        ],
     )
 
 
 class PostOut(PostIn):
     """
-        id: UUID
-        author: str | None
-        title: str
-        text: str
+    id: UUID
+    author: str | None
+    title: str
+    text: str
     """
 
     id: UUID

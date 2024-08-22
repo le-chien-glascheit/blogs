@@ -32,6 +32,7 @@ class Post(Base):
     title: str
     text: str
     """
+
     title: Mapped[str]
     text: Mapped[str]
     user_id: Mapped[UUID] = mapped_column(ForeignKey('user.id'))
@@ -102,7 +103,11 @@ if __name__ == '__main__':
     user4 = User(name='liza', email='liza@mail.com', password='blabla')
     user5 = User(name='avdotya', email='avdotya@mail.com', password='blabla')
     user6 = User(name='senya', email='senya@mail.com', password='blabla')
-    user7 = User(name='rhaenyra', email='rhaenyra@mail.com', password='blabla')
+    user7 = User(
+        name='rhaenyra',
+        email='rhaenyra@mail.com',
+        password='blabla',
+    )
 
     post1 = Post(
         title='Винипух',
@@ -125,7 +130,7 @@ if __name__ == '__main__':
     post4 = Post(
         title='Лиза',
         text='Интересно почему у Лизы нет ни постов'
-              'ни связей с другими пользователями',
+             'ни связей с другими пользователями',
         user=user3,
     )
 
@@ -195,18 +200,18 @@ if __name__ == '__main__':
         for user in user1, user2, user3, user4, user5, user6, user7:
             session.add(user)
         for post in (
-            post1,
-            post2,
-            post3,
-            post4,
-            post5,
-            post6,
-            post7,
-            post8,
-            post9,
-            post10,
-            post11,
-            post12,
+                post1,
+                post2,
+                post3,
+                post4,
+                post5,
+                post6,
+                post7,
+                post8,
+                post9,
+                post10,
+                post11,
+                post12,
         ):
             session.add(post)
 

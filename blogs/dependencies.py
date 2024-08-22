@@ -29,8 +29,8 @@ Credentials = Annotated[HTTPBasicCredentials, Depends(security)]
 
 
 def get_current_user(
-    credentials: Credentials,
-    session: Session,
+        credentials: Credentials,
+        session: Session,
 ) -> User:
     """Зависимость для получения текущего пользователя по BASIC авторизации."""
     try:

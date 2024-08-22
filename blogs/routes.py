@@ -7,10 +7,13 @@ from sqlalchemy.exc import NoResultFound
 from sqlalchemy.orm import joinedload
 
 from blogs.dependencies import CurrentUser, Session
-from blogs.exceptions import IncorrectDataError, UserNotFoundError, NotEnteredDataError
+from blogs.exceptions import (
+    IncorrectDataError,
+    NotEnteredDataError,
+    UserNotFoundError,
+)
 from blogs.models import Post, Sub, User
 from blogs.schemas import PostIn, PostOut, UserIn, UserOut
-
 
 BLOG_PATH = '/user'
 POST_PATH = '/post'
@@ -22,7 +25,12 @@ post_router = APIRouter(prefix=POST_PATH, tags=['post routes'])
 # # - [FastAPI Basic Auth](https://fastapi.tiangolo.com/advanced/security/http-basic-auth/)
 
 
-@user_router.post('', status_code=status.HTTP_201_CREATED)
+@user_router.post(
+    path='',
+    response_model_exclude_none=True,
+    name='Зарегистрироваться',
+    status_code=status.HTTP_201_CREATED,
+)
 def register_user(new_user: UserIn, session: Session) -> None:
     """
     Регистрация пользователей
@@ -46,9 +54,9 @@ class SearchMode(StrEnum):
     name='Получить пользователей',
 )
 def get_users(
-    session: Session,
-    subscribed_to_user: UUID | None = None,
-    followed: UUID | None = None,
+        session: Session,
+        subscribed_to_user: UUID | None = None,
+        followed: UUID | None = None,
 ) -> list[UserOut]:
     """
     При выборе followers выводит список всех пользователей,
@@ -103,12 +111,13 @@ def get_users(
 
 @user_router.post(
     path='/{user_id}/subscribe',
+    name='Подписаться на автора',
     status_code=status.HTTP_201_CREATED,
 )
 def subscribe_to_user(
-    user_id: UUID,
-    subscribing_user: CurrentUser,
-    session: Session,
+        user_id: UUID,
+        subscribing_user: CurrentUser,
+        session: Session,
 ) -> None:
     """
     Подписаться на выбранного пользователя по id.
@@ -117,8 +126,8 @@ def subscribe_to_user(
         the_one_subscribe_to = session.execute(
             select(User).where(User.id == user_id),
         ).scalar_one()
-    except NoResultFound:
-        raise UserNotFoundError()
+    except NoResultFound as err:
+        raise UserNotFoundError() from err
 
     subscribing = session.execute(
         select(User).where(User.id == subscribing_user.id),
@@ -134,11 +143,16 @@ def subscribe_to_user(
     session.commit()
 
 
-@post_router.post('', status_code=status.HTTP_201_CREATED)
+@post_router.post(
+    path='',
+    response_model_exclude_none=True,
+    name='Создать пост',
+    status_code=status.HTTP_201_CREATED,
+)
 def create_post(
-    post: PostIn,
-    user: CurrentUser,
-    session: Session,
+        post: PostIn,
+        user: CurrentUser,
+        session: Session,
 ) -> None:
     """
     Создать пост:
@@ -156,8 +170,8 @@ def create_post(
     name='Получить посты',
 )
 def get_posts(
-    session: Session,
-    user_id: UUID | None = None,
+        session: Session,
+        user_id: UUID | None = None,
 ) -> list[PostOut]:
     """
     Вывести все посты выбранного (по id) пользователя.
@@ -172,27 +186,29 @@ def get_posts(
             post_out.author = author
             posts_out.append(post_out)
         return posts_out
-    posts = (
-        session.execute(
-            select(Post).where(Post.user_id == user_id),
+    else:
+        posts = session.execute(
+            select(Post, User.name).where(Post.user_id == user_id).join(User),
         )
-        .scalars()
-        .all()
-    )
-    return [
-        PostOut.model_validate(post, from_attributes=True)
-        for post in posts
-    ]
+        posts_out = []
+        for post, author in posts:
+            post_out = PostOut.model_validate(post, from_attributes=True)
+            post_out.author = author
+            posts_out.append(post_out)
+        return posts_out
 
 
-
-@user_router.patch('/{user_id}/')
-def update_blog(
-    author: CurrentUser,
-    session: Session,
-    name: str | None = None,
-    email: str | None = None,
-    password: str | None = None,
+@user_router.patch(
+    path='/{user_id}/',
+    response_model_exclude_none=True,
+    name='Изменить учётные данные',
+)
+def update_user(
+        author: CurrentUser,
+        session: Session,
+        name: str | None = None,
+        email: str | None = None,
+        password: str | None = None,
 ) -> None:
     """
     Изменить данные вашей учётной записи
@@ -200,33 +216,27 @@ def update_blog(
     (имя пользователя, электронную почту, пароль)
     """
 
-    if not any((author, email, password)):
+    if not any((name, email, password)):
         raise NotEnteredDataError
-
-    if author is not None:
-        author.name = name
-        session.add()
+    else:
+        if name is not None:
+            author.name = name
+        if email is not None:
+            author.email = email
+        if password is not None:
+            author.password = password
+        session.add(author)
         session.commit()
 
 
-# inspector
-# own = (
-#     session.execute(
-#         select(User.name)
-#         .where(User.id == user_id)
-#         .options(joinedload(User.posts)),
-#     )
-#     .unique()
-#     .scalar_one()
-# )
-#
-# # # *****************************************************************
-
-
-@user_router.delete('', status_code=status.HTTP_204_NO_CONTENT)
+@user_router.delete(
+    path='',
+    response_model_exclude_none=True,
+    name='Удалить учётную запись',
+)
 def delite_user(
-    user: CurrentUser,
-    session: Session,
+        user: CurrentUser,
+        session: Session,
 ) -> None:
     """
     Удалить ваш аккаунт!!!
@@ -235,11 +245,15 @@ def delite_user(
     session.commit()
 
 
-@post_router.delete('')
+@post_router.delete(
+    path='',
+    response_model_exclude_none=True,
+    name='Удалить пост',
+)
 def delite_post(
-    user: CurrentUser,
-    session: Session,
-    post_id: UUID,
+        user: CurrentUser,
+        session: Session,
+        post_id: UUID,
 ) -> None:
     """
     Удалить ваш выбранный пост по его id.
