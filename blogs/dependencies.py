@@ -9,9 +9,9 @@ from sqlalchemy.orm import sessionmaker
 
 from blogs.exceptions import PasswordMismatchError, UserNotFoundError
 from blogs.models import User
-from blogs.settings import DB_URL
+from blogs.settings import settings
 
-engine = create_engine(DB_URL)
+engine = create_engine(settings.db_url)
 
 SessionMaker = sessionmaker(engine)
 
@@ -29,8 +29,8 @@ Credentials = Annotated[HTTPBasicCredentials, Depends(security)]
 
 
 def get_current_user(
-        credentials: Credentials,
-        session: Session,
+    credentials: Credentials,
+    session: Session,
 ) -> User:
     """Зависимость для получения текущего пользователя по BASIC авторизации."""
     try:

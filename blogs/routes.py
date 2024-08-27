@@ -1,3 +1,5 @@
+import types
+import uuid
 from enum import StrEnum
 from uuid import UUID
 
@@ -69,44 +71,49 @@ def get_users(
     В случае если ничего не выбрать,
     выводит всех пользователей текущей базы данных.
     """
-    if (subscribed_to_user is None) and (followed is None):
-        users = session.execute(select(User)).scalars().all()
-        return [
-            UserOut.model_validate(user, from_attributes=True)
-            for user in users
-        ]
-    if (subscribed_to_user and followed) is not None:
-        raise IncorrectDataError()
 
-    if followed is None:
-        user = (
-            session.execute(
+    match type(subscribed_to_user), type(followed):
+        case types.NoneType, types.NoneType:
+            request = select(User)
+        case uuid.UUID, types.NoneType:
+            request = (
                 select(User)
                 .where(User.id == subscribed_to_user)
-                .options(joinedload(User.followers)),
+                .options(joinedload(User.followers))
             )
-            .unique()
-            .scalar_one()
-        )
-
-        return [
-            UserOut.model_validate(sub.follower, from_attributes=True)
-            for sub in user.followers
-        ]
-    else:
-        user = (
-            session.execute(
+        case types.NoneType, uuid.UUID:
+            request = (
                 select(User)
                 .where(User.id == followed)
-                .options(joinedload(User.following)),
+                .options(joinedload(User.following))
             )
-            .unique()
-            .scalar_one()
-        )
-        return [
-            UserOut.model_validate(sub.followed, from_attributes=True)
-            for sub in user.following
-        ]
+        case _:
+            raise IncorrectDataError()
+
+    if (subscribed_to_user is None) and (followed is None):
+        all_users_request = session.execute(request).unique().scalars().all()
+    else:
+        users_request = session.execute(request).unique().scalar_one()
+
+    target_users = []
+    match type(subscribed_to_user), type(followed):
+        case types.NoneType, types.NoneType:
+            target_users = [
+                UserOut.model_validate(user, from_attributes=True)
+                for user in all_users_request
+            ]
+        case uuid.UUID, types.NoneType:
+            target_users = [
+                UserOut.model_validate(sub.follower, from_attributes=True)
+                for sub in users_request.followers
+            ]
+        case types.NoneType, uuid.UUID:
+            target_users = [
+                UserOut.model_validate(sub.followed, from_attributes=True)
+                for sub in users_request.following
+            ]
+
+    return target_users
 
 
 @user_router.post(
@@ -129,12 +136,9 @@ def subscribe_to_user(
     except NoResultFound as err:
         raise UserNotFoundError() from err
 
-    subscribing = session.execute(
-        select(User).where(User.id == subscribing_user.id),
-    ).scalar_one()
     sub = Sub(
         followed=the_one_subscribe_to,
-        follower=subscribing,
+        follower=subscribing_user,
     )
     session.add(sub)
 
@@ -176,26 +180,17 @@ def get_posts(
     """
     Вывести все посты выбранного (по id) пользователя.
     """
-    if user_id is None:
-        posts = session.execute(
-            select(Post, User.name).join(User),
-        )
-        posts_out = []
-        for post, author in posts:
-            post_out = PostOut.model_validate(post, from_attributes=True)
-            post_out.author = author
-            posts_out.append(post_out)
-        return posts_out
-    else:
-        posts = session.execute(
-            select(Post, User.name).where(Post.user_id == user_id).join(User),
-        )
-        posts_out = []
-        for post, author in posts:
-            post_out = PostOut.model_validate(post, from_attributes=True)
-            post_out.author = author
-            posts_out.append(post_out)
-        return posts_out
+    base_request = select(Post, User.name)
+    if user_id is not None:
+        base_request = base_request.where(Post.user_id == user_id)
+    posts = session.execute(base_request.join(User))
+
+    posts_out = []
+    for post, author in posts:
+        post_out = PostOut.model_validate(post, from_attributes=True)
+        post_out.author = author
+        posts_out.append(post_out)
+    return posts_out
 
 
 @user_router.patch(
@@ -218,15 +213,14 @@ def update_user(
 
     if not any((name, email, password)):
         raise NotEnteredDataError
-    else:
-        if name is not None:
-            author.name = name
-        if email is not None:
-            author.email = email
-        if password is not None:
-            author.password = password
-        session.add(author)
-        session.commit()
+    if name is not None:
+        author.name = name
+    if email is not None:
+        author.email = email
+    if password is not None:
+        author.password = password
+    session.add(author)
+    session.commit()
 
 
 @user_router.delete(
@@ -234,7 +228,7 @@ def update_user(
     response_model_exclude_none=True,
     name='Удалить учётную запись',
 )
-def delite_user(
+def delete_user(
         user: CurrentUser,
         session: Session,
 ) -> None:
@@ -250,7 +244,7 @@ def delite_user(
     response_model_exclude_none=True,
     name='Удалить пост',
 )
-def delite_post(
+def delete_post(
         user: CurrentUser,
         session: Session,
         post_id: UUID,
