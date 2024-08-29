@@ -56,9 +56,9 @@ class SearchMode(StrEnum):
     name='Получить пользователей',
 )
 def get_users(
-        session: Session,
-        subscribed_to_user: UUID | None = None,
-        followed: UUID | None = None,
+    session: Session,
+    subscribed_to_user: UUID | None = None,
+    followed: UUID | None = None,
 ) -> list[UserOut]:
     """
     При выборе followers выводит список всех пользователей,
@@ -122,9 +122,9 @@ def get_users(
     status_code=status.HTTP_201_CREATED,
 )
 def subscribe_to_user(
-        user_id: UUID,
-        subscribing_user: CurrentUser,
-        session: Session,
+    user_id: UUID,
+    subscribing_user: CurrentUser,
+    session: Session,
 ) -> None:
     """
     Подписаться на выбранного пользователя по id.
@@ -154,9 +154,9 @@ def subscribe_to_user(
     status_code=status.HTTP_201_CREATED,
 )
 def create_post(
-        post: PostIn,
-        user: CurrentUser,
-        session: Session,
+    post: PostIn,
+    user: CurrentUser,
+    session: Session,
 ) -> None:
     """
     Создать пост:
@@ -174,8 +174,8 @@ def create_post(
     name='Получить посты',
 )
 def get_posts(
-        session: Session,
-        user_id: UUID | None = None,
+    session: Session,
+    user_id: UUID | None = None,
 ) -> list[PostOut]:
     """
     Вывести все посты выбранного (по id) пользователя.
@@ -199,11 +199,11 @@ def get_posts(
     name='Изменить учётные данные',
 )
 def update_user(
-        author: CurrentUser,
-        session: Session,
-        name: str | None = None,
-        email: str | None = None,
-        password: str | None = None,
+    author: CurrentUser,
+    session: Session,
+    name: str | None = None,
+    email: str | None = None,
+    password: str | None = None,
 ) -> None:
     """
     Изменить данные вашей учётной записи
@@ -229,8 +229,8 @@ def update_user(
     name='Удалить учётную запись',
 )
 def delete_user(
-        user: CurrentUser,
-        session: Session,
+    user: CurrentUser,
+    session: Session,
 ) -> None:
     """
     Удалить ваш аккаунт!!!
@@ -245,9 +245,9 @@ def delete_user(
     name='Удалить пост',
 )
 def delete_post(
-        user: CurrentUser,
-        session: Session,
-        post_id: UUID,
+    user: CurrentUser,
+    session: Session,
+    post_id: UUID,
 ) -> None:
     """
     Удалить ваш выбранный пост по его id.
