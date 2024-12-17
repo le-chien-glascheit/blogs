@@ -1,0 +1,35 @@
+import random
+
+# Создаем список всех сотрудников
+employees = {
+    'разработчик': ['Иван', 'Петр', 'Сергей', 'Алексей', 'Дмитрий'],
+    'консультант': ['Анна', 'Мария', 'Елена', 'Ольга', 'Татьяна']
+}
+
+# Создаем словарь для хранения приоритетов сотрудников
+priorities = {employee: 0 for employee in employees['разработчик'] + employees['консультант']}
+
+# Создаем список для хранения состава сотрудников на выходные дни
+weekend_staff = []
+
+# Считаем количество рабочих дней в текущем месяце
+working_days = 22
+
+# Задаем количество рабочих дней для увеличения приоритета
+increase_priority_days = 5
+
+# Заполняем приоритеты сотрудников
+for _ in range(working_days):
+    for employee in priorities:
+        if random.randint(0, 1) == 1:
+            priorities[employee] += 1
+            
+# Формируем состав сотрудников на выходные дни
+for _ in range(4):  # 4 выходных дня в месяце
+    weekend_staff.append([max(employees['разработчик'], key=lambda x: priorities[x])])
+    lowest_priority_consultants = sorted(employees['консультант'], key=lambda x: priorities[x])[:2]
+    weekend_staff[-1].extend(lowest_priority_consultants)
+
+# Выводим состав сотрудников на выходные дни
+for i, staff in enumerate(weekend_staff, 1):
+    print(f'Выходной день {i}: {staff}')
